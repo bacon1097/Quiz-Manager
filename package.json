@@ -1,0 +1,33 @@
+{
+  "name": "quiz-manager",
+  "version": "1.0.0",
+  "description": "Quiz Manager for WebbiSkools Ltd",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bacon1097/Quiz-Manager.git"
+  },
+  "keywords": [
+    "Quiz",
+    "Manager"
+  ],
+  "author": "Benjamin Brunyee",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bacon1097/Quiz-Manager/issues"
+  },
+  "homepage": "https://github.com/bacon1097/Quiz-Manager#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongodb": "^3.6.0"
+  }
+}
