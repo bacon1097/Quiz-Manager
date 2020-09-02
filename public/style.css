@@ -90,27 +90,34 @@ section {
   -moz-box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.01);
   box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.01);
   margin: 30px 0 0 0;
-  padding: 0 40px 0 0;
+  padding: 40px 0;
   display: inline-flex;
+}
+
+.card-container {
+  justify-content: space-evenly;
+  width: 100%;
 }
 
 .card {
   border-radius: 20px;
   width: 200px;
-  height: 200px;
   -webkit-box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.2);
   -moz-box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.2);
   box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.2);
-  margin: 40px 0 40px 40px;
-  display: flex;
+  display: block;
   transition: all 0.2s;
 }
 
 .card svg {
-  height: 75%;
-  width: auto;
-  margin: auto;
+  height: auto;
+  width: 75%;
+  margin: 20px 0 0;
   fill: #3f3f3f;
+}
+
+.card h3 {
+  margin: 10px 0;
 }
 
 .card:hover {
@@ -124,6 +131,10 @@ section {
   fill: #ef2d56;
 }
 
+.card:hover h3 {
+  color: #ef2d56;
+}
+
 .card div {
   display: block;
   width: 100%;
@@ -131,5 +142,62 @@ section {
 
 a {
   text-decoration: none;
+  text-align: center;
+  cursor: pointer;
   color: #000;
+}
+
+.btn {
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  padding: 5px 30px;
+  border-radius: 5px;
+  background-color: #ef2d56;
+  transition: all 0.2s;
+  width: 100px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.btn:hover {
+  border-radius: 30px;
+  background-color: #d7284d;
+}
+
+input {
+  display: block;
+}
+
+.login-input {
+  margin: 0 0 15px 0;
+  height: 20px;
+}
+
+#login-container {
+  display: inline-block;
+}
+
+.login-label {
+  display: block;
+}
+
+#login-button {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0;
+  margin-top: 40px;
+  display: block;
+}
+
+#login-error {
+  text-align: center;
+  color: #ef2d56;
+  margin: auto;
+  font-size: 12px;
+  display: none;
+  margin-top: 40px;
+  width: 170px;
+  height: 40px;
 }

@@ -9,12 +9,12 @@
     "login": "contributor",
     "password": "contributor",
     "picture": "new-user.svg",
-    "permissions": "contributor"
+    "permissions": "CONTRIBUTOR"
   },
   {
     "login": "viewer",
     "password": "viewer",
     "picture": "new-user.svg",
-    "permissions": "viewer"
+    "permissions": "VIEWER"
   }
 ]
