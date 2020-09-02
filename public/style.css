@@ -120,18 +120,31 @@ section {
   margin: 10px 0;
 }
 
-.card:hover {
+a.card:hover {
   background-color: #3f3f3f;
   box-shadow: 0 0 0 0 #fff;
   -webkit-box-shadow: 0 0 0 0 #fff;
   -moz-box-shadow: 0 0 0 0 #fff;
 }
 
-.card:hover svg {
+a.card:hover svg {
   fill: #ef2d56;
 }
 
-.card:hover h3 {
+a.card:hover h3 {
+  color: #ef2d56;
+}
+
+.card h3 {
+  transition: all 0.2s;
+}
+
+.card a {
+  transition: all 0.2s;
+}
+
+
+div.card a:hover {
   color: #ef2d56;
 }
 
@@ -159,6 +172,7 @@ a {
   width: 100px;
   margin-top: 10px;
   margin-bottom: 10px;
+  height: min-content;
 }
 
 .btn:hover {
@@ -200,4 +214,48 @@ input {
   margin-top: 40px;
   width: 170px;
   height: 40px;
+}
+
+.quiz-title {
+  margin: auto 10px !important;
+  display: inline-block;
+}
+
+.quiz-edit {
+  margin: auto 10px;
+  display: inline-block;
+}
+
+.question-container {
+  width: 100%;
+  display: block;
+}
+
+.padded-container {
+  padding: 40px;
+}
+
+.question-buttons {
+  display: inline-block;
+  margin: 10px 10px 0 0;
+}
+
+.question-container p {
+  margin: 0;
+}
+
+.question {
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.question-container .input-answer {
+  width: 25%;
+  margin: 20px 0;
+  font-size: 20px;
+}
+
+.radio-input {
+  display: inline;
+  margin: 15px;
 }

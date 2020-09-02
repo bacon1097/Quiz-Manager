@@ -12,6 +12,8 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const e = require('express');
 const cookieParser = require('cookie-parser');
+const { rejects } = require('assert');
+const { ObjectId } = require('mongodb');
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -98,12 +100,107 @@ client.connect(err => {
     }
   });
 
-  app.get('/service/get-quizzes', authenticateToken, (req, res) => {
+  // Get the available quizzes
+  app.get('/service/get-quizzes', authenticateToken, async (req, res) => {
     if (req.user) {
+      const permissions = req.permissions;    // Permissions of the user
+      var htmlString = '';
 
+      await collectionQuizzes.find().forEach((doc) => {   // Await to load full html string
+        htmlString += '<div class="card">';    // Anchor tag for quiz
+        htmlString += `<h3 class="quiz-title"><a href="/quiz?id=${doc._id}">${doc.name}</a></h3>`;   // Title of quiz
+        if (permissions === PERMS.ADMIN || permissions === PERMS.CONTRIBUTOR) {   // If permissions are there then add another button
+          htmlString += '<a class="quiz-edit">Edit</a>';
+        }
+        htmlString += '</div>';
+      });
+
+      res.send(htmlString);
     }
     else {    // No user is logged in so return the login page
       res.redirect('/login');
+    }
+  });
+
+  // Get a specific quiz
+  app.get('/quiz', authenticateToken, (req, res) => {
+    if (req.user && req.query.id) {
+      res.sendFile(path.join(__dirname + '/html/quiz.html'));
+    }
+    else {
+      res.redirect('/login');
+    }
+  });
+
+  // Get the questions and title for the quiz
+  app.get('/service/quiz-questions', authenticateToken, async (req, res) => {
+    if (req.user) {
+      if (req.query.id) {
+        collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, async (err, result) => {
+          if (!err) {
+            if (result) {
+              var questions = result.questions;
+              await questions.forEach((q) => {
+                delete q["answer"];   // Delete the answers from each question
+              })
+              res.json({status: 'success', questions: questions, title: result.name});
+            }
+            else {
+              console.log('Quiz could not be found in quizzes collection');
+              res.status(401).json({status: 'failed'});
+            }
+          }
+          else {
+            console.log('Failed to query quizzes collection');
+            res.status(500).json({status: 'failed'})
+          }
+        });
+      }
+      else {
+        console.log('No ID provided');
+        res.status(401).json({status: 'failed'});
+      }
+    }
+    else {
+      console.log('Permission denied to view quizzes collection');
+      res.status(403).json({status: 'failed'});
+    }
+  });
+
+  // Submit answers
+  app.post('/service/submit-answers', authenticateToken, (req, res) => {
+    if (req.user) {
+      if (req.query.id && req.body.answers) {
+        collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, async (err, result) => {
+          if (!err) {
+            if (result) {
+              var correctAnswers = 0;
+              await req.body.answers.forEach((ans, index) => {
+                if (ans === result.questions[index].answer) {
+                  correctAnswers++;
+                }
+              });
+              res.json({status: 'success', correctAnswers: correctAnswers});
+            }
+            else {
+              console.log('Quiz could not be found in quizzes collection');
+              res.status(401).json({status: 'failed'});
+            }
+          }
+          else {
+            console.log('Failed to query quizzes collection');
+            res.status(500).json({status: 'failed'})
+          }
+        });
+      }
+      else {
+        console.log('No ID or body provided');
+        res.status(401).json({status: 'failed'});
+      }
+    }
+    else {
+      console.log('Permission denied to submit answers');
+      res.status(403).json({status: 'failed'});
     }
   });
 
@@ -205,9 +302,9 @@ client.connect(err => {
         collectionUsers.findOne({login: user.name}, (err, result) => {
           if (!err) {
             if (result) {
-              req.perms = result.permissions;
+              req.permissions = result.permissions;
               console.log(`User is: ${user.name}`);
-              console.log(`User permissions are: ${req.perms}`);
+              console.log(`User permissions are: ${req.permissions}`);
               req.user = user.name;
               return next();
             }
