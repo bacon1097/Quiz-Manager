@@ -1,17 +1,25 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const port = 3000;
 const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://admin:admin@quiz-manager-cluster.hi5x3.mongodb.net/<dbname>?retryWrites=true&w=majority";
+const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(express.static('html'));
+
+const PERMS = {   // Permissions for users
+  ADMIN: "ADMIN",
+  CONTRIBUTOR: "CONTRIBUTOR",
+  VIEWER: "VIEWER"
+};
 
 client.connect(err => {
   const collectionUsers = client.db('users').collection('users');
@@ -34,68 +42,6 @@ client.connect(err => {
 
   app.get('/quizzes', (req, res) => {
     res.sendFile(path.join(__dirname + '/html/quizzes.html'));
-  });
-
-  app.post('/service/create-user', (req, res) => {
-    var response = {status: 'failed'};
-    if (!req.body.email || !req.body.password) {
-      res.json(response);
-      return;
-    }
-    console.log('Received request to create user');
-    if (req.body.email.includes('@') && ! req.body.email.match(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/)) {
-      console.log('Email is not valid');
-      res.status(400).json(response);
-      return;
-    }
-    collectionUsers.findOne({email: req.body.email}, (err, result) => {
-      if (result) {
-        console.log('User already exists');
-        res.status(409).json(response);
-        return;
-      }
-      else {
-        bcrypt.genSalt(saltRounds, (err, salt) => {
-          if (!err) {
-            bcrypt.hash(req.body.password, salt, (err, hash) => {
-              if (!err) {
-                collectionUsers.insertOne({
-                  email: req.body.email,
-                  password: hash,
-                  picture: 'new-user.svg'
-                }, (err, result) => {
-                  if (!err) {
-                    console.log('Successfully added user to users collection');
-                    response.status = 'success';
-                    res.json(response);
-                    return;
-                  }
-                  else {
-                    console.log('Failed to insert document into users collection');
-                    console.log(err);
-                    res.json(response);
-                    return;
-                  }
-                })
-              }
-              else {
-                console.log('Failed to hash password');
-                console.log(err);
-                console.log(req.body);
-                res.json(response);
-                return;
-              }
-            });
-          }
-          else {
-            console.log('Failed to create salt');
-            console.log(err);
-            res.json(response);
-            return;
-          }
-        });
-      }
-    });
   });
 
   app.post('/service/create-quiz', (req, res) => {
@@ -125,5 +71,13 @@ client.connect(err => {
         return;
       }
     });
+  });
+
+  app.post('/login' , (req, res) => {
+    const username = req.body.username
+    const user = { name: username };
+
+    const accessToken = jwt.sign(user, process.env.TOKEN_SECRET);
+    res.json({ accessToken: accessToken });
   });
 });

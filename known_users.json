@@ -1,0 +1,20 @@
+[
+  {
+    "login": "admin",
+    "password": "admin",
+    "picture": "new-user.svg",
+    "permissions": "ADMIN"
+  },
+  {
+    "login": "contributor",
+    "password": "contributor",
+    "picture": "new-user.svg",
+    "permissions": "contributor"
+  },
+  {
+    "login": "viewer",
+    "password": "viewer",
+    "picture": "new-user.svg",
+    "permissions": "viewer"
+  }
+]
