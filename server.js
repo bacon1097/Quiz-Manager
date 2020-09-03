@@ -56,6 +56,7 @@ client.connect(err => {
   });
   console.log('Known users are configured');
 
+  // Start the server
   app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
   });
@@ -100,17 +101,61 @@ client.connect(err => {
     }
   });
 
+  app.get('/service/get-quiz-details', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      if (req.query.id) {
+        console.log('Received request to get all details of quiz: ' + req.query.id);
+        if (hasHigherPerms(req.permissions)) {
+          collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, (err, result) => {
+            if (!err) {
+              if (result) {
+                response = {
+                  status: 'success',
+                  body: result
+                }
+                res.json(response);
+              }
+              else {
+                console.log('Quiz does not exist');
+                res.status(401).json(response);
+              }
+            }
+            else {
+              console.log('Failed to get quiz details: ' + req.body.id);
+              res.status(500).json(response);
+            }
+          });
+        }
+        else {
+          console.log('Invalid permissions to get quiz details');
+          res.status(403).json(response);
+        }
+      }
+      else {
+        console.log('No ID provided');
+        res.status(401).json(response);
+      }
+    }
+    else {
+      console.log('No user logged in');
+      res.status(401).json(response);
+    }
+  });
+
   // Get the available quizzes
   app.get('/service/get-quizzes', authenticateToken, async (req, res) => {
     if (req.user) {
-      const permissions = req.permissions;    // Permissions of the user
       var htmlString = '';
 
       await collectionQuizzes.find().forEach((doc) => {   // Await to load full html string
         htmlString += '<div class="card">';    // Anchor tag for quiz
         htmlString += `<h3 class="quiz-title"><a href="/quiz?id=${doc._id}">${doc.name}</a></h3>`;   // Title of quiz
-        if (permissions === PERMS.ADMIN || permissions === PERMS.CONTRIBUTOR) {   // If permissions are there then add another button
-          htmlString += '<a class="quiz-edit">Edit</a>';
+        if (hasHigherPerms(req.permissions)) {   // If permissions are there then add another button
+          htmlString += `<a class="quiz-option btn btn-spaced quiz-edit" href="/quiz-manager/${doc._id}">Edit</a>`;
+        }
+        if (isAdmin(req.permissions)) {
+          htmlString += `<a class="quiz-option btn btn-spaced quiz-delete" data-href="/service/delete-quiz?id=${doc._id}">Delete</a>`;
         }
         htmlString += '</div>';
       });
@@ -122,10 +167,79 @@ client.connect(err => {
     }
   });
 
+  // Edit an existing quiz
+  app.get('/quiz-manager/:id', authenticateToken, (req, res) => {
+    if (req.user) {
+      if (hasHigherPerms(req.permissions)) {    // Contributor or admin
+        var quizId = req.params.id;
+        res.sendFile(path.join(__dirname + '/html/quiz-manager.html'));
+      }
+      else {
+        console.log('Invalid permissions to edit quiz')
+        res.redirect('/');
+      }
+    }
+    else {    // No user is logged in so return the login page
+      console.log('No user logged in');
+      res.redirect('/login');
+    }
+  });
+
+  // Delete a quiz
+  app.post('/service/delete-quiz', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      if (req.query.id) {
+        var quizId = req.query.id;
+        console.log(`Received request to delete quiz: ${quizId}`);
+        if (isAdmin(req.permissions)) {
+          collectionQuizzes.deleteOne({}, (err, result) => {
+            if (!err) {
+              console.log(`Delete quiz: ${quizId}`);
+              response.status = 'success';
+              res.status(200).json(response);
+            }
+            else {
+              console.log(`Failed to delete quiz: ${quizId}`);
+              res.status(500).json(response);
+            }
+          });
+        }
+        else {    // User is not an admin
+          console.log('Invalid permissions to delete quiz')
+          res.status(403).json(response);
+        }
+      }
+      else {    // No ID provided
+        console.log('No ID provided to delete');
+        res.status(401).json(response);
+      }
+    }
+    else {    // No user is logged in
+      console.log('No user logged in');
+      res.status(401).json(response);
+    }
+  });
+
   // Get a specific quiz
   app.get('/quiz', authenticateToken, (req, res) => {
     if (req.user && req.query.id) {
       res.sendFile(path.join(__dirname + '/html/quiz.html'));
+    }
+    else {
+      res.redirect('/login');
+    }
+  });
+
+  // Create quiz
+  app.get('/quiz-manager', authenticateToken, (req, res) => {
+    if (req.user) {
+      if (isAdmin(req.permissions)) {
+        res.sendFile(path.join(__dirname + '/html/quiz-manager.html'));
+      }
+      else {
+        res.redirect('/');
+      }
     }
     else {
       res.redirect('/login');
@@ -167,10 +281,39 @@ client.connect(err => {
     }
   });
 
+  // Get username of the user logged in
+  app.get('/service/get-username', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      response = {
+        status: 'success',
+        user: req.user
+      }
+      res.json(response);
+    }
+    else {
+      res.status(403).json(response);
+    }
+  });
+
+  app.get('/service/get-permissions', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      response = {
+        status: 'success',
+        permissions: req.permissions
+      }
+      res.json(response);
+    }
+    else {
+      res.status(403).json(response);
+    }
+  });
+
   // Submit answers
   app.post('/service/submit-answers', authenticateToken, (req, res) => {
     if (req.user) {
-      if (req.query.id && req.body.answers) {
+      if (req.query.id && req.body.answers && req.body.answers instanceof Array) {
         collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, async (err, result) => {
           if (!err) {
             if (result) {
@@ -194,7 +337,7 @@ client.connect(err => {
         });
       }
       else {
-        console.log('No ID or body provided');
+        console.log('No ID or body array provided');
         res.status(401).json({status: 'failed'});
       }
     }
@@ -247,44 +390,75 @@ client.connect(err => {
     });
   });
 
+  // Logout the user
   app.post('/logout', authenticateToken, (req, res) => {
     console.log('Received request to delete token cookie');
     res.clearCookie('JwtToken', {maxAge: 0});   // Delete the cookie
     res.status(200).json({status: 'success'});
   });
 
-  // Create Quiz
+  // Create or update a quiz
   app.post('/service/create-quiz', authenticateToken, (req, res) => {
     var response = {status: 'failed'};
     if (req.user) {
-      console.log('Received request to add quiz to quizzes collection')
-      if (!req.body.name || !req.body.questions || !req.body.date || !req.body.owner) {
-        console.log("Not all details were provided");
-        res.json(response);
-        return;
-      }
-      collectionQuizzes.insertOne({
-        name: req.body.name,
-        questions: req.body.questions,
-        date: req.body.date,
-        owner: req.body.owner
-      }, (err, result) => {
-        if (!err) {
-          console.log('Successfully added quiz to quizzes collection');
-          response.status = 'success';
+      if (isAdmin(req.permissions)) {
+        console.log('Received request to add/update quiz in quizzes collection')
+        if (!req.body.name || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
+          console.log("Not all details were provided");
           res.json(response);
           return;
+        }
+        var quiz = {
+          name: req.body.name,
+          questions: req.body.questions,
+          date: req.body.date,
+          owner: req.user
+        };
+        if (req.body._id) {
+          quiz._id = ObjectId(req.body._id);
+        }
+        console.log(quiz);
+        if (req.body.existingQuiz) {
+          collectionQuizzes.update({_id: quiz._id}, quiz, (err, result) => {
+            if (!err) {
+              console.log('Successfully updated quiz in quizzes collection');
+              response.status = 'success';
+              res.json(response);
+              return;
+            }
+            else {
+              console.log('Error update existing quiz into quizzes collection');
+              console.log(err);
+              res.json(response);
+              return;
+            }
+          });
         }
         else {
-          console.log('Error inserting new quiz into quizzes collection');
-          console.log(err);
-          res.json(response);
-          return;
+          collectionQuizzes.insertOne(quiz, (err, result) => {
+            if (!err) {
+              console.log('Successfully added quiz to quizzes collection');
+              response.status = 'success';
+              res.json(response);
+              return;
+            }
+            else {
+              console.log('Error inserting new quiz into quizzes collection');
+              console.log(err);
+              res.json(response);
+              return;
+            }
+          });
         }
-      });
+      }
+      else {    // User does not have permissions
+        console.log('Invalid permissions - Cannot create quiz');
+        res.status(403).json(response);
+      }
     }
     else {    // No user is logged in so return permission denied
-      res.status(403).json(response);
+      console.log('User is not logged in - Cannot create quiz');
+      res.status(401).json(response);
     }
   });
 
@@ -324,5 +498,25 @@ client.connect(err => {
         return next();   // No user logged in
       }
     });
+  }
+
+  // Check if the user has contributor or admin permissions
+  function hasHigherPerms(perms) {
+    if (perms === PERMS.ADMIN || perms === PERMS.CONTRIBUTOR) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  // Check if the user has highest permissions
+  function isAdmin(perms) {
+    if (perms === PERMS.ADMIN) {
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 });

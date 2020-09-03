@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="/quizzes.js"></script>
+  <script src="/quiz-manager.js"></script>
   <link rel="stylesheet" href="/style.css">
-  <title>Quizzes - Quizzes</title>
+  <title>Quizzes - Quiz Manager</title>
 </head>
 <body>
   <nav id="main-nav">
@@ -24,11 +24,22 @@
     </a>
   </nav>
   <div id="title-container" class="full-width">
-    <h1>Home</h1>
+    <input id="name-quiz" type="text" placeholder="Quiz Name">
   </div>
   <section class="full-width">
-    <h2>Pick a quiz</h2>
-    <div class="rounded-container card-container">
+    <h2>Question 1</h2>
+    <p>To create your quiz fill out the details and press "Submit" instead of "Next"</p>
+    <div class="rounded-container question-container padded-container">
+      <input type="text" placeholder="Question?" id="question-input">
+      <select name="question-type" id="question-type-input">
+        <option value="" disabled selected hidden>Select type of question</option>
+        <option value="input">Input</option>
+        <option value="list">List</option>
+      </select>
+      <div id="question-answers">
+      </div>
+      <div class="btn question-buttons" id="back-button" style="display: none">Back</div>
+      <div class="btn question-buttons" id="next-button">Next</div>
     </div>
   </section>
 </body>

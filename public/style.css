@@ -107,6 +107,7 @@ section {
   box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.2);
   display: block;
   transition: all 0.2s;
+  padding: 20px;
 }
 
 .card svg {
@@ -144,13 +145,8 @@ a.card:hover h3 {
 }
 
 
-div.card a:hover {
+div.card h3 a:hover {
   color: #ef2d56;
-}
-
-.card div {
-  display: block;
-  width: 100%;
 }
 
 a {
@@ -173,6 +169,16 @@ a {
   margin-top: 10px;
   margin-bottom: 10px;
   height: min-content;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  border: none;
+}
+
+.btn-spaced {
+  margin: 10px auto !important;
 }
 
 .btn:hover {
@@ -217,13 +223,14 @@ input {
 }
 
 .quiz-title {
-  margin: auto 10px !important;
-  display: inline-block;
+  margin: auto !important;
+  text-align: center;
 }
 
-.quiz-edit {
-  margin: auto 10px;
-  display: inline-block;
+.quiz-option {
+  margin: auto;
+  text-align: center;
+  display: block;
 }
 
 .question-container {
@@ -258,4 +265,49 @@ input {
 .radio-input {
   display: inline;
   margin: 15px;
+}
+
+.no-input-error {
+  margin-top: 20px !important;
+  color: #ff0000;
+}
+
+input#name-quiz {
+  font-size: 30px;
+  border: 2px solid #3f3f3f;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding: 10px;
+  font-weight: 500;
+  margin: auto 0 auto 20px
+}
+
+input#question-input {
+  font-size: 25px;
+  font-weight: 500;
+  width: 25%;
+}
+
+select#question-type-input {
+  font-size: 20px;
+  margin: 20px auto;
+  width: 15%;
+}
+
+#question-answers input {
+  font-size: 20px;
+  width: 15%;
+  margin: 0 0 20px 0;
+}
+
+#question-answers #add-list-option {
+  margin: 0 0 20px 0;
+}
+
+.answer-option {
+  background-color: #eeeeee;
+}
+
+#list-answer, #input-question-answer {
+  background-color: lime;
 }

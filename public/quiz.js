@@ -23,34 +23,13 @@ $(document).ready(() => {
 
   $('div').on('click', '#next-button', () => {
     if (questionCounter + 1 < questions.length) {
-      if (questions[questionCounter].type === 'input') {
-        $('input[type="text"]').each(() => {
-          if ($(this).hasClass('input-answer')) {
-            console.log($(this).val());
-            answers.push($(this).val());
-          }
-          else {
-            console.log(this);
-            console.log($(this).attr('class'));
-            console.log('nope');
-          }
-        });
-        // answers.push($('.input-answer').val());
-      }
-      else if (questions[questionCounter].type === 'list') {
-        $('input').each(() => {
-          if ($(this).attr('answers') && $(this).is(':checked')) {
-            answers.push($(this).val());
-          }
-        });
-        // console.log($('.radio-input[name="answers"]:checked').val());
-        // answers.push($('.radio-input[name="answers"]:checked').val());
+      if (addAnswer()) {
+        questionCounter++;
+        loadQuestion(questionCounter);
       }
       else {
-        console.log('Type doesn\'t exist');
+        noInputError();
       }
-      questionCounter++;
-      loadQuestion(questionCounter);
     }
   });
 
@@ -62,25 +41,30 @@ $(document).ready(() => {
   });
 
   $('div').on('click', '#submit-button', () => {
-    $.ajax({
-      url: `/service/submit-answers?id=${qID}`,
-      type: 'POST',
-      data: {
-        answers: answers
-      },
-      success: (result) => {
-        if (result.status && result.status === 'success') {
-          $('section h2').text('Your results');
+    if (addAnswer()) {
+      $.ajax({
+        url: `/service/submit-answers?id=${qID}`,
+        type: 'POST',
+        data: {
+          answers: answers
+        },
+        success: (result) => {
+          if (result.status && result.status === 'success') {
+            $('section h2').text('Your results');
+            $('section div.question-container').empty();
+            $('section div.question-container').append($.parseHTML(`<p class="question">You got:<br>${result.correctAnswers}/${questions.length}</p>`));
+          }
+        },
+        error: (err) => {
+          console.log(err);
+          $('section h2').text('Error occured when submitting your results');
           $('section div.question-container').empty();
-          $('section div.question-container').append($.parseHTML(`<p class="question">You got:<br>${result.correctAnswers}/${questions.length}</p>`));
         }
-      },
-      error: (err) => {
-        console.log(err);
-        $('section h2').text('Error occured when submitting your results');
-        $('section div.question-container').empty();
-      }
-    });
+      });
+    }
+    else {
+      noInputError();
+    }
   });
 
   // Load the question to the page
@@ -111,6 +95,46 @@ $(document).ready(() => {
 
     if (num + 1 == 1) {
       $('#back-button').remove();
+    }
+  }
+
+  function addAnswer() {
+    var answerInput;
+    var result = false;
+
+    if (questions[questionCounter].type === 'input') {
+      answerInput = $('div.question-container').find('input.input-answer').val();
+      if (answerInput) {
+        answers.push(answerInput);
+        result = true;
+        return result;
+      }
+      else {
+        console.log('No answer provided');
+        return result;
+      }
+    }
+    else if (questions[questionCounter].type === 'list') {
+      answerInput = $('div.question-container').find('input[name="answers"]:checked').val();
+      if (answerInput) {
+        answers.push(answerInput);
+        result = true;
+        return result;
+      }
+      else {
+        console.log('No answer provided');
+        return result;
+      }
+    }
+    else {
+      console.log('Type doesn\'t exist');
+      return result;
+    }
+  }
+
+  function noInputError() {
+    if (!$('section div.question-container').find('p.no-input-error').length) {
+      $('section div.question-container').append($.parseHTML('<p class="no-input-error">Please provide an answer before moving on</p>'));
     }
   }
 });

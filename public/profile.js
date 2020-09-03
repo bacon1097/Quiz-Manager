@@ -8,4 +8,18 @@ $(document).ready(() => {
       }
     });
   });
+
+  $.ajax({
+    url: '/service/get-username',
+    type: 'GET',
+    success: (result) => {
+      if (result && result.status === 'success' && result.user) {
+        $('h2').text(`Hello, ${result.user}`);
+      }
+      else {
+        console.log('Could not get username');
+        $('h2').text(`Hello there`);
+      }
+    }
+  })
 });
