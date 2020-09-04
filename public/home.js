@@ -6,11 +6,11 @@ $(document).ready(() => {
     success: result => {
       if (result && result.status === 'success') {
         var perms = result.permissions;
-        if (perms === 'ADMIN' || perms == 'CONTRIBUTOR') {
+        if (perms === 'ADMIN') {
           $('.card-container').append($.parseHTML(
             '<a href="/quiz-manager" class="card">' +
               '<ion-icon name="add-circle"></ion-icon>' +
-              '<h3>Create Quizes</h3>' +
+              '<h3>Create Quizzes</h3>' +
             '</a>'
           ));
           loadSidebar(perms);

@@ -26,10 +26,17 @@
     <h1>Profile</h1>
   </div>
   <section class="full-width">
-    <h2></h2>
+    <h2>Hello, </h2>
     <div class="rounded-container padded-container inline-block-container">
+      <h3 style="text-align: center;">Change username or password</h3>
+      <form action="">
+        <input id="username-input" type="text" placeholder="New username" autocomplete="username">
+        <input id="password-input" type="password" placeholder="New password" autocomplete="new-password">
+        <input id="password-repeat-input" type="password" placeholder="Repeat new password" autocomplete="new-password">
+      </form>
+      <div id="save-creds-btn" class="btn middle-btn">Save</div>
       <h3 style="text-align: center;">Logout?</h3>
-      <div id="log-out-btn" class="btn question-buttons">Log Out</div>
+      <div id="log-out-btn" class="btn middle-btn bottom-btn">Log Out</div>
     </div>
   </section>
 </body>

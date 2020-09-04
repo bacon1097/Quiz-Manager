@@ -140,6 +140,7 @@ section {
 
 .card h3 {
   margin: 10px 0;
+  color: var(--secondary-color);
 }
 
 .card p {
@@ -254,12 +255,6 @@ input {
   text-align: center;
 }
 
-.quiz-option {
-  margin: auto;
-  text-align: center;
-  display: block;
-}
-
 .block-container {
   width: 100%;
   display: block !important;
@@ -363,10 +358,19 @@ select#question-type-input {
   display: inline-block !important;
 }
 
-.inline-block-container .bottom-button {
+.inline-block-container .bottom-btn {
   margin-bottom: 0;
 }
 
 #color-theme {
   margin: 20px 0;
+}
+
+.middle-btn {
+  display: block;
+  margin: 10px auto;
+}
+
+.inline-block-container input {
+  margin: 15px auto;
 }

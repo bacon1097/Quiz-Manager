@@ -14,6 +14,7 @@ const e = require('express');
 const cookieParser = require('cookie-parser');
 const { rejects } = require('assert');
 const { ObjectId } = require('mongodb');
+const { restart } = require('nodemon');
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -152,10 +153,10 @@ client.connect(err => {
         htmlString += '<div class="card">';    // Anchor tag for quiz
         htmlString += `<h3 class="quiz-title"><a href="/quiz?id=${doc._id}">${doc.name}</a></h3>`;   // Title of quiz
         if (hasHigherPerms(req.permissions)) {   // If permissions are there then add another button
-          htmlString += `<a class="quiz-option btn btn-spaced quiz-edit" href="/quiz-manager/${doc._id}">Edit</a>`;
+          htmlString += `<a class="btn middle-btn quiz-edit" href="/quiz-manager/${doc._id}">Edit</a>`;
         }
         if (isAdmin(req.permissions)) {
-          htmlString += `<a class="quiz-option btn btn-spaced quiz-delete" data-href="/service/delete-quiz?id=${doc._id}">Delete</a>`;
+          htmlString += `<a class="btn middle-btn quiz-delete" data-href="/service/delete-quiz?id=${doc._id}">Delete</a>`;
         }
         htmlString += `<p>${doc.date}</p>`;
         htmlString += '</div>';
@@ -283,7 +284,7 @@ client.connect(err => {
         var quizId = req.query.id;
         console.log(`Received request to delete quiz: ${quizId}`);
         if (isAdmin(req.permissions)) {
-          collectionQuizzes.deleteOne({}, (err, result) => {
+          collectionQuizzes.deleteOne({_id: ObjectId(quizId)}, (err, result) => {
             if (!err) {
               console.log(`Delete quiz: ${quizId}`);
               response.status = 'success';
@@ -391,6 +392,75 @@ client.connect(err => {
     });
   });
 
+  // Update credentials
+  app.post('/service/update-user', authenticateToken, async (req, res) => {
+    var response = {status: 'failed'};
+
+    if (!req.user) {    // Check if user has been authenticated
+      console.log('No user logged in');
+      res.status(401).json(response);
+      return;
+    }
+
+    if (!req.body.username || !req.body.password || !req.body.passwordRepeat) {   // Check if all data is provided
+      console.log('Not all data provided to server');
+      res.status(500).json(response);
+      return;
+    }
+
+    if (req.body.password !== req.body.passwordRepeat) {    // Check if passwords match
+      console.log('Passwords do not match');
+      res.status(406).json(response);
+      return;
+    }
+
+    if (req.body.username !== req.user) {   // Requesting a name change
+      // Check if the user exists already
+      var existingUser = await collectionUsers.findOne({login: req.body.username});
+      if (existingUser) {   // A user already exists with the same name
+        console.log('Could not change user "' + req.user + '" to "' + req.body.username + '" since name is taken');
+        res.status(409).json(response);
+        return;
+      }
+    }
+
+    // Hash the password
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+      if (err) {
+        console.log('Failed to hash password');
+        res.status(500).json(response);
+        return;
+      }
+
+      if (hash) {
+        // Update the user
+        collectionUsers.updateOne({login: req.user}, {
+          $set: {
+            login: req.body.username,
+            password: hash
+          }
+        }, (err, result) => {
+          if (err) {
+            console.log('Failed to save user information : ' + req.user);
+            res.status(500).json(response);
+            return;
+          }
+          else {
+            res.clearCookie('JwtToken', {maxAge: 0});   // Delete the cookie so the user is taken to the login page
+            console.log('Successfully saved user information: ' + req.body.username);
+            response.status = 'success';
+            res.json(response);
+          }
+        });
+      }
+      else {
+        console.log('Failed to hash password');
+        res.status(500).json(response);
+        return;
+      }
+    });
+  });
+
   // Logout the user
   app.post('/logout', authenticateToken, (req, res) => {
     console.log('Received request to delete token cookie');
@@ -480,7 +550,9 @@ client.connect(err => {
             }
             else {    // User doesn't exist
               console.log(`User doesn't exist in user collection: ${user.name}`);
-              return res.status(403);
+              res.clearCookie('JwtToken', {maxAge: 0});   // Delete the cookie
+              return res.redirect('/login');
+              // return res.status(403);
             }
           }   // Internal server error
           else {

@@ -226,9 +226,8 @@ $(document).ready(() => {
   }
 
   function invalidInputError(msg) {
-    if (!$('.no-input-error').length) {
-      $('.block-container').append($.parseHTML('<p class="no-input-error">' + msg + '</p>'));
-    }
+    $('.no-input-error').remove();
+    $('.block-container').append($.parseHTML('<p class="no-input-error">' + msg + '</p>'));
   }
 
   function quizModificationCheck() {
@@ -248,7 +247,20 @@ $(document).ready(() => {
             $('#name-quiz').val(quiz.name);
             changeQuestionTitle();
             loadQuestion();
-            $('.block-container').append($.parseHTML('<div id="delete-button" class="btn question-buttons">Delete Question</div>'));
+            $.ajax({
+              url: '/service/get-permissions',
+              type: 'GET',
+              success: result => {
+                if (result && result.status === 'success') {
+                  if (result.permissions === 'ADMIN') {
+                    $('.block-container').append($.parseHTML('<div id="delete-button" class="btn question-buttons">Delete Question</div>'));
+                  }
+                }
+                else {
+                  console.log('Could not get user permissions');
+                }
+              }
+            });
           }
           else {
             invalidInputError('Failed to get quiz details');

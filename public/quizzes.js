@@ -9,7 +9,7 @@ $(document).ready(() => {
       var cards = $.parseHTML(result);
 
       $(cards).each((i, elem) => {
-        var deleteButton = $(elem).find('a.quiz-delete');
+        var deleteButton = $(elem).find('a.quiz-delete[data-href]');
         if (deleteButton) {
           $(deleteButton).click(() => {
             $.ajax({
@@ -22,7 +22,7 @@ $(document).ready(() => {
                 location.reload();
               }
             });
-          })
+          });
         }
 
         $('.card-container').append($(elem));
