@@ -310,16 +310,16 @@ input#name-quiz {
 input#question-input {
   font-size: 25px;
   font-weight: 500;
-  width: 25%;
+  width: 320px;
 }
 
 select#question-type-input {
   margin: 20px 0;
-  width: 15%;
+  width: 300px;
 }
 
 #question-answers input {
-  width: 15%;
+  width: 250px;
   margin: 0 0 20px 0;
 }
 
