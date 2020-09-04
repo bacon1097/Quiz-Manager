@@ -1,14 +1,28 @@
+import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
-  const localStorage = window.localStorage;
-  localStorage.setItem('token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiY29udHJpYnV0b3IiLCJpYXQiOjE1OTkwMzc3OTd9.dNUPloCwRGYkAA_h1obFpop8uoVNcc_OFI9uhAGJKPo');
   $.ajax({
-    url: '/verify',
-    type: 'POST',
-    headers: {
-      authorization: 'Bearer ' + localStorage.getItem('token')
+    url: '/service/get-permissions',
+    type: 'GET',
+    success: result => {
+      if (result && result.status === 'success') {
+        var perms = result.permissions;
+        if (perms === 'ADMIN' || perms == 'CONTRIBUTOR') {
+          $('.card-container').append($.parseHTML(
+            '<a href="/quiz-manager" class="card">' +
+              '<ion-icon name="add-circle"></ion-icon>' +
+              '<h3>Create Quizes</h3>' +
+            '</a>'
+          ));
+          loadSidebar(perms);
+        }
+      }
+      else {
+        console.log('Failed to get user permissions');
+      }
     },
-    success: function (msg) {
-      console.log(msg);
+    error: err => {
+      console.log(err);
+      console.log('Failed to get user permissions');
     }
-  })
+  });
 });

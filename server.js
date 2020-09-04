@@ -157,6 +157,7 @@ client.connect(err => {
         if (isAdmin(req.permissions)) {
           htmlString += `<a class="quiz-option btn btn-spaced quiz-delete" data-href="/service/delete-quiz?id=${doc._id}">Delete</a>`;
         }
+        htmlString += `<p>${doc.date}</p>`;
         htmlString += '</div>';
       });
 
@@ -171,7 +172,6 @@ client.connect(err => {
   app.get('/quiz-manager/:id', authenticateToken, (req, res) => {
     if (req.user) {
       if (hasHigherPerms(req.permissions)) {    // Contributor or admin
-        var quizId = req.params.id;
         res.sendFile(path.join(__dirname + '/html/quiz-manager.html'));
       }
       else {
@@ -182,42 +182,6 @@ client.connect(err => {
     else {    // No user is logged in so return the login page
       console.log('No user logged in');
       res.redirect('/login');
-    }
-  });
-
-  // Delete a quiz
-  app.post('/service/delete-quiz', authenticateToken, (req, res) => {
-    var response = {status: 'failed'};
-    if (req.user) {
-      if (req.query.id) {
-        var quizId = req.query.id;
-        console.log(`Received request to delete quiz: ${quizId}`);
-        if (isAdmin(req.permissions)) {
-          collectionQuizzes.deleteOne({}, (err, result) => {
-            if (!err) {
-              console.log(`Delete quiz: ${quizId}`);
-              response.status = 'success';
-              res.status(200).json(response);
-            }
-            else {
-              console.log(`Failed to delete quiz: ${quizId}`);
-              res.status(500).json(response);
-            }
-          });
-        }
-        else {    // User is not an admin
-          console.log('Invalid permissions to delete quiz')
-          res.status(403).json(response);
-        }
-      }
-      else {    // No ID provided
-        console.log('No ID provided to delete');
-        res.status(401).json(response);
-      }
-    }
-    else {    // No user is logged in
-      console.log('No user logged in');
-      res.status(401).json(response);
     }
   });
 
@@ -296,6 +260,7 @@ client.connect(err => {
     }
   });
 
+  // Get user permissions
   app.get('/service/get-permissions', authenticateToken, (req, res) => {
     var response = {status: 'failed'};
     if (req.user) {
@@ -310,6 +275,42 @@ client.connect(err => {
     }
   });
 
+  // Delete a quiz
+  app.post('/service/delete-quiz', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      if (req.query.id) {
+        var quizId = req.query.id;
+        console.log(`Received request to delete quiz: ${quizId}`);
+        if (isAdmin(req.permissions)) {
+          collectionQuizzes.deleteOne({}, (err, result) => {
+            if (!err) {
+              console.log(`Delete quiz: ${quizId}`);
+              response.status = 'success';
+              res.status(200).json(response);
+            }
+            else {
+              console.log(`Failed to delete quiz: ${quizId}`);
+              res.status(500).json(response);
+            }
+          });
+        }
+        else {    // User is not an admin
+          console.log('Invalid permissions to delete quiz')
+          res.status(403).json(response);
+        }
+      }
+      else {    // No ID provided
+        console.log('No ID provided to delete');
+        res.status(401).json(response);
+      }
+    }
+    else {    // No user is logged in
+      console.log('No user logged in');
+      res.status(401).json(response);
+    }
+  });
+
   // Submit answers
   app.post('/service/submit-answers', authenticateToken, (req, res) => {
     if (req.user) {
@@ -319,7 +320,7 @@ client.connect(err => {
             if (result) {
               var correctAnswers = 0;
               await req.body.answers.forEach((ans, index) => {
-                if (ans === result.questions[index].answer) {
+                if (ans.toLowerCase().trim() === result.questions[index].answer.toLowerCase().trim()) {
                   correctAnswers++;
                 }
               });
@@ -466,19 +467,14 @@ client.connect(err => {
   function authenticateToken(req, res, next) {
     const token = req.cookies.JwtToken;   // Get JWT from cookies
 
-    console.log('Authenticating user');
-
     if (token == null) return next();    // No token provided
 
-    console.log(`Got token: ${token}`);
     jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
       if (!err) {
         collectionUsers.findOne({login: user.name}, (err, result) => {
           if (!err) {
             if (result) {
               req.permissions = result.permissions;
-              console.log(`User is: ${user.name}`);
-              console.log(`User permissions are: ${req.permissions}`);
               req.user = user.name;
               return next();
             }

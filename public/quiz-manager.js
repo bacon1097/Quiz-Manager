@@ -1,4 +1,7 @@
+import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
+  loadSidebar();
+
   var currentQuestion = 1;
   var quiz = {
     name: '',
@@ -14,7 +17,7 @@ $(document).ready(() => {
     success: result => {
       if (result && result.status === 'success') {
         if (result.permissions === 'ADMIN') {
-          $('.question-container').append($.parseHTML('<div class="btn question-buttons" id="submit-button">Submit</div>'));
+          $('.block-container').append($.parseHTML('<div class="btn question-buttons" id="submit-button">Submit Quiz</div>'));
         }
       }
       else {
@@ -51,7 +54,14 @@ $(document).ready(() => {
     }
   });
 
-  $('#submit-button').click(async () => {
+  $('.block-container').on('click', '#delete-button', () => {
+    quiz.questions.splice(currentQuestion - 1, 1);
+    currentQuestion--;
+    loadQuestion();
+    changeQuestionTitle();
+  });
+
+  $('.block-container').on('click', '#submit-button', async () => {
     if ($('#name-quiz').val()) {
       if (isValidInput()) {
         await addOrUpdateQuestion();
@@ -178,7 +188,6 @@ $(document).ready(() => {
       else {
         quiz.questions.push(questionData);
       }
-
       return true;
     }
     else {
@@ -218,7 +227,7 @@ $(document).ready(() => {
 
   function invalidInputError(msg) {
     if (!$('.no-input-error').length) {
-      $('.question-container').append($.parseHTML('<p class="no-input-error">' + msg + '</p>'));
+      $('.block-container').append($.parseHTML('<p class="no-input-error">' + msg + '</p>'));
     }
   }
 
@@ -239,6 +248,7 @@ $(document).ready(() => {
             $('#name-quiz').val(quiz.name);
             changeQuestionTitle();
             loadQuestion();
+            $('.block-container').append($.parseHTML('<div id="delete-button" class="btn question-buttons">Delete Question</div>'));
           }
           else {
             invalidInputError('Failed to get quiz details');

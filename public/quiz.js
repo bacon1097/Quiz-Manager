@@ -1,4 +1,6 @@
+import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
+  loadSidebar();
   const urlParams = new URLSearchParams(window.location.search);
   var qID = urlParams.get('id');
   var questionCounter = 0;
@@ -51,14 +53,14 @@ $(document).ready(() => {
         success: (result) => {
           if (result.status && result.status === 'success') {
             $('section h2').text('Your results');
-            $('section div.question-container').empty();
-            $('section div.question-container').append($.parseHTML(`<p class="question">You got:<br>${result.correctAnswers}/${questions.length}</p>`));
+            $('section div.block-container').empty();
+            $('section div.block-container').append($.parseHTML(`<p class="question">You got:<br>${result.correctAnswers}/${questions.length}</p>`));
           }
         },
         error: (err) => {
           console.log(err);
           $('section h2').text('Error occured when submitting your results');
-          $('section div.question-container').empty();
+          $('section div.block-container').empty();
         }
       });
     }
@@ -69,7 +71,7 @@ $(document).ready(() => {
 
   // Load the question to the page
   async function loadQuestion(num) {
-    $('section h2').text('Question ' + (parseInt(num) + 1));
+    $('section h2').text('Question ' + (parseInt(num) + 1) + '/' + questions.length);
     var question = questions[num].question;
     var htmlString = `<p class="question">${question.trim()}?</p>`;
     if (questions[num].type.trim() === 'input') {
@@ -85,12 +87,12 @@ $(document).ready(() => {
     }
     htmlString += '<div class="btn question-buttons" id="back-button">Back</div>';
     htmlString += '<div class="btn question-buttons" id="next-button">Next</div>';
-    $('section div.question-container').empty();
-    $('section div.question-container').append($.parseHTML(htmlString));
+    $('section div.block-container').empty();
+    $('section div.block-container').append($.parseHTML(htmlString));
 
     if (num + 1 == questions.length) {
       $('#next-button').remove();
-      $('section div.question-container').append($.parseHTML('<div class="btn question-buttons" id="submit-button">Submit</div>'));
+      $('section div.block-container').append($.parseHTML('<div class="btn question-buttons" id="submit-button">Submit</div>'));
     }
 
     if (num + 1 == 1) {
@@ -103,7 +105,7 @@ $(document).ready(() => {
     var result = false;
 
     if (questions[questionCounter].type === 'input') {
-      answerInput = $('div.question-container').find('input.input-answer').val();
+      answerInput = $('div.block-container').find('input.input-answer').val();
       if (answerInput) {
         answers.push(answerInput);
         result = true;
@@ -115,7 +117,7 @@ $(document).ready(() => {
       }
     }
     else if (questions[questionCounter].type === 'list') {
-      answerInput = $('div.question-container').find('input[name="answers"]:checked').val();
+      answerInput = $('div.block-container').find('input[name="answers"]:checked').val();
       if (answerInput) {
         answers.push(answerInput);
         result = true;
@@ -133,8 +135,8 @@ $(document).ready(() => {
   }
 
   function noInputError() {
-    if (!$('section div.question-container').find('p.no-input-error').length) {
-      $('section div.question-container').append($.parseHTML('<p class="no-input-error">Please provide an answer before moving on</p>'));
+    if (!$('section div.block-container').find('p.no-input-error').length) {
+      $('section div.block-container').append($.parseHTML('<p class="no-input-error">Please provide an answer before moving on</p>'));
     }
   }
 });

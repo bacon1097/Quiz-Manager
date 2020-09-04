@@ -1,4 +1,7 @@
+import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
+  loadSidebar();
+
   $.ajax({
     url: '/service/get-quizzes',
     type: 'GET',

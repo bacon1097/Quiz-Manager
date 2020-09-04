@@ -1,4 +1,6 @@
+import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
+  loadSidebar();
   $('#log-out-btn').click(() => {
     $.ajax({
       url: '/logout',
@@ -21,5 +23,5 @@ $(document).ready(() => {
         $('h2').text(`Hello there`);
       }
     }
-  })
+  });
 });
