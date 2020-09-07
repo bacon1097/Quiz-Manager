@@ -18,7 +18,7 @@ $(document).ready(() => {
     var password = $('#password-input').val();
     var passwordRepeat = $('#password-repeat-input').val();
 
-    if (!username || !password || !passwordRepeat) {
+    if (!password || !passwordRepeat) {
       errorMessage('Please provide all details');
     }
     else {
@@ -81,7 +81,7 @@ $(document).ready(() => {
   });
 
   function errorMessage(msg) {
-    $('.no-input-error').remove()
-    $('#save-creds-btn').after($.parseHTML('<p style="text-align: center;" class="no-input-error">'+ msg + '</p>'));
+    $('.no-input-error').css({display: 'block'});
+    $('.no-input-error').text(msg);
   }
 });

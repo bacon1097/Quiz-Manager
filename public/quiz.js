@@ -106,7 +106,7 @@ $(document).ready(() => {
 
     if (questions[questionCounter].type === 'input') {
       answerInput = $('div.block-container').find('input.input-answer').val();
-      if (answerInput) {
+      if (answerInput.replace(/\s/g, '').length) {
         answers.push(answerInput);
         result = true;
         return result;

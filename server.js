@@ -221,7 +221,11 @@ client.connect(err => {
               var questions = result.questions;
               await questions.forEach((q) => {
                 delete q["answer"];   // Delete the answers from each question
-              })
+                if (q.answers) {
+                  shuffle(q.answers);
+                }
+              });
+              console.log(questions);
               res.json({status: 'success', questions: questions, title: result.name});
             }
             else {
@@ -354,6 +358,10 @@ client.connect(err => {
     const login = req.body.login
     const user = { name: login };
 
+    if (!user || !req.body.password) {
+      return res.status(422).json({status: 'failed'});
+    }
+
     collectionUsers.findOne({login: login}, (err, result) => {
       if (!err) {
         if (result) {
@@ -474,7 +482,7 @@ client.connect(err => {
     if (req.user) {
       if (isAdmin(req.permissions)) {
         console.log('Received request to add/update quiz in quizzes collection')
-        if (!req.body.name || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
+        if (!req.body.name.replace(/\s/g, '').length || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
           console.log("Not all details were provided");
           res.json(response);
           return;
@@ -566,6 +574,26 @@ client.connect(err => {
         return next();   // No user logged in
       }
     });
+  }
+
+  // Shuffle the array
+  function shuffle(array) {
+    var currentIndex = array.length, temporaryValue, randomIndex;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+
+    return array;
   }
 
   // Check if the user has contributor or admin permissions

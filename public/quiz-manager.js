@@ -1,6 +1,7 @@
 import { loadSidebar } from '/modules/common.js';
 $(document).ready(() => {
   loadSidebar();
+  var invalidReg = /[^\s\x30-\x39\x41-\x5A\x61-\x7A]/;
 
   var currentQuestion = 1;
   var quiz = {
@@ -41,7 +42,7 @@ $(document).ready(() => {
       }
     }
     else {
-      invalidInputError('Please fill out the entire form');
+      invalidInputError('Please fill out the entire form - Ensure that there are no special characters');
     }
   });
 
@@ -62,13 +63,18 @@ $(document).ready(() => {
   });
 
   $('.block-container').on('click', '#submit-button', async () => {
-    if ($('#name-quiz').val()) {
-      if (isValidInput()) {
+    if ($('#name-quiz').val().replace(/\s/g, '').length) {
+      if (await isValidInput()) {
         await addOrUpdateQuestion();
       }
       if (quiz.questions.length > 0) {
         quiz.date = new Date().today() + ' ' + new Date().timeNow();
         quiz.name = $('#name-quiz').val();
+
+        if (quiz.name.match(invalidReg)) {
+          invalidInputError('Ensure that there are no special characters in quiz name');
+          return;
+        }
         $.ajax({
           url: '/service/create-quiz',
           type: 'POST',
@@ -119,22 +125,34 @@ $(document).ready(() => {
     }
   });
 
-  function isValidInput() {
+  async function isValidInput() {
     var question = $('#question-input').val();
     var questionType = $('#question-type-input').val();
     var questionAnswer;
+    var answerOptions = []
 
     if (questionType === 'input') {
       questionAnswer = $('.answer-option').val();
     }
     else if (questionType === 'list') {
       questionAnswer = $('#list-answer').val();
+      await $.each($('.answer-option'), (i, elem) => {
+        answerOptions.push($(elem).val());
+      });
     }
     else {
       return false;
     }
 
     if (question && questionType && questionAnswer) {
+      if (question.match(invalidReg) || questionAnswer.match(invalidReg)) {
+        return false;
+      }
+
+      for (var elem of answerOptions) {
+        if (elem.match(invalidReg)) return false;
+      }
+
       return true;
     }
     else {
@@ -149,7 +167,7 @@ $(document).ready(() => {
       answer: '',
     };
 
-    if (isValidInput()) {
+    if (await isValidInput()) {
       var question = $('#question-input').val().replace(/\??$/, '');
       var questionType = $('#question-type-input').val();
       var questionAnswer;
