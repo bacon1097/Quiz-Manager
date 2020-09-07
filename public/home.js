@@ -6,7 +6,7 @@ $(document).ready(() => {
     success: result => {
       if (result && result.status === 'success') {
         var perms = result.permissions;
-        if (perms === 'ADMIN') {
+        if (perms === 'EDIT') {
           $('.card-container').append($.parseHTML(
             '<a href="/quiz-manager" class="card">' +
               '<ion-icon name="add-circle"></ion-icon>' +

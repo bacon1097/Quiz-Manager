@@ -43,6 +43,13 @@ $(document).ready(() => {
     }
   });
 
+  $('#password-input').keypress((event) => {
+    if (event.which == 13) {
+      event.preventDefault();
+      $('#login-button').click();
+    }
+  });
+
   function displayErrorMessage(msg) {
     $('#login-error').text(msg);
     $('#login-error').css({display: 'block'});

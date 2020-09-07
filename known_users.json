@@ -3,18 +3,18 @@
     "login": "admin",
     "password": "admin",
     "picture": "new-user.svg",
-    "permissions": "ADMIN"
+    "permissions": "EDIT"
   },
   {
     "login": "contributor",
     "password": "contributor",
     "picture": "new-user.svg",
-    "permissions": "CONTRIBUTOR"
+    "permissions": "VIEW"
   },
   {
     "login": "viewer",
     "password": "viewer",
     "picture": "new-user.svg",
-    "permissions": "VIEWER"
+    "permissions": "RESTRICTED"
   }
 ]

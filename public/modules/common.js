@@ -22,7 +22,7 @@ export function loadSidebar(perms=null) {
   }
 
   function addQuizManager(perms) {
-    if (perms === 'ADMIN') {
+    if (perms === 'EDIT') {
       $('#main-nav').append($.parseHTML(
         '<a href="/quiz-manager" class="icon-image">' +
           '<ion-icon name="add-circle-outline"></ion-icon>' +

@@ -1,7 +1,8 @@
 import { loadSidebar } from '/modules/common.js';
+
 $(document).ready(() => {
   loadSidebar();
-  var invalidReg = /[^\s\x30-\x39\x41-\x5A\x61-\x7A]/;
+  var invalidReg = /[^\s\x30-\x39\x41-\x5A\x61-\x7A?]/;
 
   var currentQuestion = 1;
   var quiz = {
@@ -17,49 +18,80 @@ $(document).ready(() => {
     type: 'GET',
     success: result => {
       if (result && result.status === 'success') {
-        if (result.permissions === 'ADMIN') {
+        if (result.permissions === 'EDIT') {
           $('.block-container').append($.parseHTML('<div class="btn question-buttons" id="submit-button">Submit Quiz</div>'));
+          $('.block-container').append($.parseHTML('<div class="btn question-buttons" id="add-button">Add Question</div>'));
+          $('.block-container').append($.parseHTML('<div id="delete-button" class="btn question-buttons">Delete Question</div>'));
         }
       }
       else {
         console.log('Could not get user permissions');
       }
+      checkButtonVisibility();
     }
+  });
+
+  $('#back-button').click(async () => {
+    if (await addOrUpdateQuestion()) {
+      currentQuestion--;
+      await loadQuestion();
+    }
+    else {
+      invalidInputError('Please fill out the entire form - Ensure that there are no special characters');
+    }
+    changeQuestionTitle();
+    checkButtonVisibility();
   });
 
   $('#next-button').click(async () => {
     if (await addOrUpdateQuestion()) {
       currentQuestion++;
-      if (quiz.questions.length >= currentQuestion) {
+      if (currentQuestion <= quiz.questions.length) {
         await loadQuestion();
       }
       else {
-        await newQuestion();
-      }
-      changeQuestionTitle();
-      if (currentQuestion > 1) {
-        $('#back-button').css({display: 'inline-block'});
+        await clearFields();
       }
     }
     else {
       invalidInputError('Please fill out the entire form - Ensure that there are no special characters');
     }
+    changeQuestionTitle();
+    checkButtonVisibility();
   });
 
-  $('#back-button').click(async () => {
-    currentQuestion--;
-    await loadQuestion();
-    changeQuestionTitle();
-    if (currentQuestion <= 1) {
-      $('#back-button').css({display: 'none'});
+  $('.block-container').on('click', '#add-button', async () => {
+    quiz.questions.splice(currentQuestion, 0, {
+      question: '',
+      type: 'input',
+      answer: ''
+    });
+    if (await addOrUpdateQuestion()) {
+      currentQuestion++;
+      await loadQuestion();
     }
+    else {
+      invalidInputError('Please fill out the entire form - Ensure that there are no special characters');
+    }
+    changeQuestionTitle();
+    checkButtonVisibility();
   });
 
-  $('.block-container').on('click', '#delete-button', () => {
+  $('.block-container').on('click', '#delete-button', async () => {
     quiz.questions.splice(currentQuestion - 1, 1);
-    currentQuestion--;
-    loadQuestion();
-    changeQuestionTitle();
+    if (currentQuestion > 1) {
+      currentQuestion--;
+    }
+    else {
+    }
+    if (quiz.questions.length != 0) {
+      await loadQuestion();
+      changeQuestionTitle();
+    }
+    else {
+      await clearFields();
+    }
+    checkButtonVisibility();
   });
 
   $('.block-container').on('click', '#submit-button', async () => {
@@ -124,6 +156,29 @@ $(document).ready(() => {
       console.log('Answer type is not valid');
     }
   });
+
+  function checkButtonVisibility() {
+    if (currentQuestion == 1) {
+      $('#back-button').css({display: 'none'});
+    }
+    if (currentQuestion > 1) {
+      $('#back-button').css({display: 'inline-block'});
+    }
+
+    if (currentQuestion == quiz.questions.length || quiz.questions == 0) {
+      $('#next-button').css({display: 'none'});
+    }
+    if (currentQuestion < quiz.questions.length) {
+      $('#next-button').css({display: 'inline-block'});
+    }
+
+    if (quiz.questions.length == 1) {
+      $('#delete-button').css({display: 'none'});
+    }
+    if (quiz.questions.length != 1) {
+      $('#delete-button').css({display: 'inline-block'});
+    }
+  }
 
   async function isValidInput() {
     var question = $('#question-input').val();
@@ -216,7 +271,7 @@ $(document).ready(() => {
   async function loadQuestion() {
     var question = quiz.questions[currentQuestion - 1];
 
-    newQuestion();
+    clearFields();
 
     $('#question-input').val(question.question);
     $('#question-type-input').val(question.type);
@@ -236,7 +291,7 @@ $(document).ready(() => {
     }
   }
 
-  function newQuestion() {
+  function clearFields() {
     $('#question-answers').empty();
     $('#question-input').val('');
     $('#question-type-input').val('');
@@ -251,7 +306,6 @@ $(document).ready(() => {
   function quizModificationCheck() {
     var url = window.location.href.split('/');
     var quizId = url[4];
-    console.log(quizId);
 
     if (quizId) {
       $.ajax({
@@ -265,20 +319,6 @@ $(document).ready(() => {
             $('#name-quiz').val(quiz.name);
             changeQuestionTitle();
             loadQuestion();
-            $.ajax({
-              url: '/service/get-permissions',
-              type: 'GET',
-              success: result => {
-                if (result && result.status === 'success') {
-                  if (result.permissions === 'ADMIN') {
-                    $('.block-container').append($.parseHTML('<div id="delete-button" class="btn question-buttons">Delete Question</div>'));
-                  }
-                }
-                else {
-                  console.log('Could not get user permissions');
-                }
-              }
-            });
           }
           else {
             invalidInputError('Failed to get quiz details');

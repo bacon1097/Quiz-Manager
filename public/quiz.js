@@ -78,8 +78,8 @@ $(document).ready(() => {
       htmlString += `<input type="text" class="input-answer">`;
     }
     else if (questions[num].type.trim() === 'list') {
-      await questions[num].answers.forEach((answer) => {
-        htmlString += `<div><input type="radio" name="answers" class="radio-input" value="${answer}"><label>${answer.trim()}</label></div>`;
+      await questions[num].answers.forEach((answer, i) => {
+        htmlString += `<div><input type="radio" name="answers" class="radio-input" value="${answer}"><label>` + String.fromCharCode(65 + i) + `. ${answer.trim()}</label></div>`;
       });
     }
     else {

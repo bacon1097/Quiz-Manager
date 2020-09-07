@@ -15,17 +15,19 @@ const cookieParser = require('cookie-parser');
 const { rejects } = require('assert');
 const { ObjectId } = require('mongodb');
 const { restart } = require('nodemon');
+const favicon = require('serve-favicon');
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(express.static('html'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(favicon(path.join(__dirname + '/public/assets/favicon.ico')));
 
 const PERMS = {   // Permissions for users
-  ADMIN: "ADMIN",
-  CONTRIBUTOR: "CONTRIBUTOR",
-  VIEWER: "VIEWER"
+  ADMIN: "EDIT",
+  CONTRIBUTOR: "VIEW",
+  VIEWER: "RESTRICTED"
 };
 
 client.connect(err => {
@@ -225,7 +227,6 @@ client.connect(err => {
                   shuffle(q.answers);
                 }
               });
-              console.log(questions);
               res.json({status: 'success', questions: questions, title: result.name});
             }
             else {
