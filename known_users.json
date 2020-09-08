@@ -2,19 +2,16 @@
   {
     "login": "admin",
     "password": "admin",
-    "picture": "new-user.svg",
     "permissions": "EDIT"
   },
   {
     "login": "contributor",
     "password": "contributor",
-    "picture": "new-user.svg",
     "permissions": "VIEW"
   },
   {
     "login": "viewer",
     "password": "viewer",
-    "picture": "new-user.svg",
     "permissions": "RESTRICTED"
   }
 ]
