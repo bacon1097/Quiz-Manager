@@ -44,11 +44,16 @@ npm install npm@latest -g
 ```sh
 git clone https://github.com/bacon1097/Quiz-Manager.git
 ```
-2. Install NPM packages
+1. Install NPM packages
 ```sh
 npm install
 ```
-3. Run server
+1. Create .env file
+```sh
+echo "MONGO_URI=mongodb+srv://admin:admin@quiz-manager-cluster.hi5x3.mongodb.net/quiz-manager-cluster?retryWrites=true&w=majority
+TOKEN_SECRET=50aac40ffdbb308546d21c1835dd13c6e4ceb2839f1ecac0f09cfacad67a3c63221e074a7f8cf2c811676cc3222629545568e96a75fda9dbb5bf97fc4892e58e" >> .env
+```
+1. Run server
 ```sh
 node server.js
 ```
