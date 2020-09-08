@@ -39,7 +39,6 @@ $(document).ready(() => {
   $('div').on('click', '#back-button', () => {
     if (questionCounter + 1 > 1) {
       questionCounter--;
-      answers.pop()
       loadQuestion(questionCounter);
     }
     console.log(answers);
@@ -78,11 +77,13 @@ $(document).ready(() => {
     var question = questions[num].question;
     var htmlString = `<p class="question">${question.trim()}?</p>`;
     if (questions[num].type.trim() === 'input') {
-      htmlString += `<input type="text" class="input-answer">`;
+      htmlString += `<input type="text" class="input-answer" ` + (answers[num] ? `value="${answers[num]}"` : '') + `>`;
     }
     else if (questions[num].type.trim() === 'list') {
       await questions[num].answers.forEach((answer, i) => {
-        htmlString += `<div><input type="radio" name="answers" class="radio-input" value="${answer}"><label>` + String.fromCharCode(65 + i) + `. ${answer.trim()}</label></div>`;
+        htmlString += `<div><input type="radio" name="answers" class="radio-input" value="${answer}" ` +
+          ((answer === answers[num]) ? 'checked="checked"' : '') + '><label>' +
+          String.fromCharCode(65 + i) + `. ${answer.trim()}</label></div>`;
       });
     }
     else {
@@ -110,7 +111,7 @@ $(document).ready(() => {
     if (questions[questionCounter].type === 'input') {
       answerInput = $('div.block-container').find('input.input-answer').val();
       if (answerInput.replace(/\s/g, '').length) {
-        answers.push(answerInput);
+        answers[questionCounter] = answerInput;
         result = true;
         return result;
       }
@@ -122,7 +123,7 @@ $(document).ready(() => {
     else if (questions[questionCounter].type === 'list') {
       answerInput = $('div.block-container').find('input[name="answers"]:checked').val();
       if (answerInput) {
-        answers.push(answerInput);
+        answers[questionCounter] = answerInput;
         result = true;
         return result;
       }

@@ -324,6 +324,7 @@ $(document).ready(() => {
             $('#name-quiz').val(quiz.name);
             changeQuestionTitle();
             loadQuestion();
+            checkButtonVisibility();
           }
           else {
             invalidInputError('Failed to get quiz details');
