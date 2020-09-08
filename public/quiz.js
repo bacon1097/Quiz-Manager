@@ -33,13 +33,16 @@ $(document).ready(() => {
         noInputError();
       }
     }
+    console.log(answers);
   });
 
   $('div').on('click', '#back-button', () => {
     if (questionCounter + 1 > 1) {
       questionCounter--;
+      answers.pop()
       loadQuestion(questionCounter);
     }
+    console.log(answers);
   });
 
   $('div').on('click', '#submit-button', () => {
