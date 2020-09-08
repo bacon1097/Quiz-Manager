@@ -68,7 +68,12 @@ $(document).ready(() => {
     });
     if (await addOrUpdateQuestion()) {
       currentQuestion++;
-      await loadQuestion();
+      if (currentQuestion <= quiz.questions.length) {
+        await loadQuestion();
+      }
+      else {
+        await clearFields();
+      }
     }
     else {
       invalidInputError('Please fill out the entire form - Ensure that there are no special characters');

@@ -497,7 +497,6 @@ client.connect(err => {
         if (req.body._id) {
           quiz._id = ObjectId(req.body._id);
         }
-        console.log(quiz);
         if (req.body.existingQuiz) {
           collectionQuizzes.update({_id: quiz._id}, quiz, (err, result) => {
             if (!err) {
