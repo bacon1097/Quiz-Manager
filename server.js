@@ -479,7 +479,6 @@ client.connect(err => {
           bcrypt.compare(req.body.password, result.password, (err, compareResult) => {
             if (!err) {
               if (compareResult) {
-                console.log(user);
                 console.log('User logged in as: ' + user.name);
                 const accessToken = jwt.sign(user, process.env.TOKEN_SECRET);   // Create a cookie
                 res.cookie('JwtToken', accessToken, { maxAge: 253402300000000});    // Send the cookie to the client
