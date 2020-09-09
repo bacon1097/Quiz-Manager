@@ -30,7 +30,25 @@ const PERMS = {   // Permissions for users
   VIEWER: "RESTRICTED"
 };
 
+
+/*
+=====
+CONTENTS
+=====
+1. CONFIGURATION
+2. PAGES
+3. QUIZ ROUTES
+4. USER ROUTES
+5. USER AUTHENTICATION
+6. FUNCTIONS
+*/
+
 client.connect(err => {
+  /*
+  -----
+  1. CONFIGURATION
+  -----
+  */
   const collectionUsers = client.db('users').collection('users');   // Collection for users
   const collectionQuizzes = client.db('quizzes').collection('quizzes');   // Collection for quizzes
 
@@ -64,6 +82,12 @@ client.connect(err => {
   app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
   });
+
+  /*
+  -----
+  2. PAGES
+  -----
+  */
 
   // Home Page
   app.get('/', authenticateToken, (req, res) => {
@@ -104,6 +128,12 @@ client.connect(err => {
       res.redirect('/');    // Redirect to home page if user is logged in
     }
   });
+
+  /*
+  -----
+  3. QUIZ ROUTES
+  -----
+  */
 
   // Get the details of the quiz
   app.get('/service/get-quiz-details', authenticateToken, (req, res) => {
@@ -255,36 +285,6 @@ client.connect(err => {
     }
   });
 
-  // Get username of the user logged in
-  app.get('/service/get-username', authenticateToken, (req, res) => {
-    var response = {status: 'failed'};
-    if (req.user) {
-      response = {
-        status: 'success',
-        user: req.user
-      }
-      res.json(response);
-    }
-    else {
-      res.status(403).json(response);
-    }
-  });
-
-  // Get user permissions
-  app.get('/service/get-permissions', authenticateToken, (req, res) => {
-    var response = {status: 'failed'};
-    if (req.user) {
-      response = {
-        status: 'success',
-        permissions: req.permissions
-      }
-      res.json(response);
-    }
-    else {
-      res.status(403).json(response);
-    }
-  });
-
   // Delete a quiz
   app.post('/service/delete-quiz', authenticateToken, (req, res) => {
     var response = {status: 'failed'};
@@ -357,6 +357,108 @@ client.connect(err => {
     else {
       console.log('Permission denied to submit answers');
       res.status(403).json({status: 'failed'});
+    }
+  });
+
+  // Create or update a quiz
+  app.post('/service/create-quiz', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      if (isAdmin(req.permissions)) {   // Ensure that the user is an admin
+        console.log('Received request to add/update quiz in quizzes collection')
+        if (!req.body.name.replace(/\s/g, '').length || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
+          console.log("Not all details were provided");
+          res.json(response);
+          return;
+        }
+        var quiz = {
+          name: req.body.name,
+          questions: req.body.questions,
+          date: req.body.date,
+          owner: req.user
+        };
+        if (req.body._id) {
+          quiz._id = ObjectId(req.body._id);
+        }
+        if (req.body.existingQuiz) {
+          // Update a quiz based on the ID
+          collectionQuizzes.update({_id: quiz._id}, quiz, (err, result) => {
+            if (!err) {
+              console.log('Successfully updated quiz in quizzes collection');
+              response.status = 'success';
+              res.json(response);
+              return;
+            }
+            else {
+              console.log('Error update existing quiz into quizzes collection');
+              console.log(err);
+              res.json(response);
+              return;
+            }
+          });
+        }
+        else {
+          // Insert a quiz if the request states it is a new one
+          collectionQuizzes.insertOne(quiz, (err, result) => {
+            if (!err) {
+              console.log('Successfully added quiz to quizzes collection');
+              response.status = 'success';
+              res.json(response);
+              return;
+            }
+            else {
+              console.log('Error inserting new quiz into quizzes collection');
+              console.log(err);
+              res.json(response);
+              return;
+            }
+          });
+        }
+      }
+      else {    // User does not have permissions
+        console.log('Invalid permissions - Cannot create quiz');
+        res.status(403).json(response);
+      }
+    }
+    else {    // No user is logged in so return permission denied
+      console.log('User is not logged in - Cannot create quiz');
+      res.status(401).json(response);
+    }
+  });
+
+  /*
+  -----
+  4. USER ROUTES
+  -----
+  */
+
+  // Get username of the user logged in
+  app.get('/service/get-username', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      response = {
+        status: 'success',
+        user: req.user
+      }
+      res.json(response);
+    }
+    else {
+      res.status(403).json(response);
+    }
+  });
+
+  // Get user permissions
+  app.get('/service/get-permissions', authenticateToken, (req, res) => {
+    var response = {status: 'failed'};
+    if (req.user) {
+      response = {
+        status: 'success',
+        permissions: req.permissions
+      }
+      res.json(response);
+    }
+    else {
+      res.status(403).json(response);
     }
   });
 
@@ -487,71 +589,11 @@ client.connect(err => {
     res.status(200).json({status: 'success'});
   });
 
-  // Create or update a quiz
-  app.post('/service/create-quiz', authenticateToken, (req, res) => {
-    var response = {status: 'failed'};
-    if (req.user) {
-      if (isAdmin(req.permissions)) {   // Ensure that the user is an admin
-        console.log('Received request to add/update quiz in quizzes collection')
-        if (!req.body.name.replace(/\s/g, '').length || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
-          console.log("Not all details were provided");
-          res.json(response);
-          return;
-        }
-        var quiz = {
-          name: req.body.name,
-          questions: req.body.questions,
-          date: req.body.date,
-          owner: req.user
-        };
-        if (req.body._id) {
-          quiz._id = ObjectId(req.body._id);
-        }
-        if (req.body.existingQuiz) {
-          // Update a quiz based on the ID
-          collectionQuizzes.update({_id: quiz._id}, quiz, (err, result) => {
-            if (!err) {
-              console.log('Successfully updated quiz in quizzes collection');
-              response.status = 'success';
-              res.json(response);
-              return;
-            }
-            else {
-              console.log('Error update existing quiz into quizzes collection');
-              console.log(err);
-              res.json(response);
-              return;
-            }
-          });
-        }
-        else {
-          // Insert a quiz if the request states it is a new one
-          collectionQuizzes.insertOne(quiz, (err, result) => {
-            if (!err) {
-              console.log('Successfully added quiz to quizzes collection');
-              response.status = 'success';
-              res.json(response);
-              return;
-            }
-            else {
-              console.log('Error inserting new quiz into quizzes collection');
-              console.log(err);
-              res.json(response);
-              return;
-            }
-          });
-        }
-      }
-      else {    // User does not have permissions
-        console.log('Invalid permissions - Cannot create quiz');
-        res.status(403).json(response);
-      }
-    }
-    else {    // No user is logged in so return permission denied
-      console.log('User is not logged in - Cannot create quiz');
-      res.status(401).json(response);
-    }
-  });
+  /*
+  -----
+  5. USER AUTHENTICATION
+  -----
+  */
 
   // Authenticate user and permissions of user
   function authenticateToken(req, res, next) {
@@ -589,6 +631,12 @@ client.connect(err => {
       }
     });
   }
+
+  /*
+  -----
+  6. FUNCTIONS
+  -----
+  */
 
   // Shuffle the array
   function shuffle(array) {
