@@ -17,12 +17,12 @@ const { ObjectId } = require('mongodb');
 const { restart } = require('nodemon');
 const favicon = require('serve-favicon');
 
-app.use(bodyParser.json());
-app.use(express.static('public'));
-app.use(express.static('html'));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(favicon(path.join(__dirname + '/public/assets/favicon.ico')));
+app.use(bodyParser.json());   // Allows the parsing of body data
+app.use(express.static('public'));    // For easy file access
+app.use(express.static('html'));    // For easy file access
+app.use(bodyParser.urlencoded({ extended: true }));   // Parsing bodies from the URL
+app.use(cookieParser());    // Allows the parsing of client cookies
+app.use(favicon(path.join(__dirname + '/public/assets/favicon.ico')));    // To serve a favicon on every page
 
 const PERMS = {   // Permissions for users
   ADMIN: "EDIT",
@@ -31,18 +31,19 @@ const PERMS = {   // Permissions for users
 };
 
 client.connect(err => {
-  const collectionUsers = client.db('users').collection('users');
-  const collectionQuizzes = client.db('quizzes').collection('quizzes');
+  const collectionUsers = client.db('users').collection('users');   // Collection for users
+  const collectionQuizzes = client.db('quizzes').collection('quizzes');   // Collection for quizzes
 
   // Configure database with 'known_users.json'
   var known_users = require('./known_users.json');
   known_users.forEach(user => {
-    collectionUsers.findOne({login: user.login}, (err, result) => {
+    collectionUsers.findOne({login: user.login}, (err, result) => {   // If the user exists then do nothing
       if (!err) {
         if (!result) {
-          bcrypt.hash(user.password, saltRounds, (err, hash) => {
+          bcrypt.hash(user.password, saltRounds, (err, hash) => {   // Hash the password
             if (!err) {
               user.password = hash
+              // Insert the user into the database
               collectionUsers.insertOne(user, (err, result) => { if (err) console.log('Could not insert user into user collection')});
             }
             else {
@@ -55,7 +56,7 @@ client.connect(err => {
       else {
         console.log('Error when trying to query the user collection');
       }
-    })
+    });
   });
   console.log('Known users are configured');
 
@@ -104,12 +105,14 @@ client.connect(err => {
     }
   });
 
+  // Get the details of the quiz
   app.get('/service/get-quiz-details', authenticateToken, (req, res) => {
     var response = {status: 'failed'};
     if (req.user) {
-      if (req.query.id) {
+      if (req.query.id) {   // If an ID was passed to the server
         console.log('Received request to get all details of quiz: ' + req.query.id);
         if (hasHigherPerms(req.permissions)) {
+          // Find a quiz with the ID requested
           collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, (err, result) => {
             if (!err) {
               if (result) {
@@ -157,7 +160,7 @@ client.connect(err => {
         if (hasHigherPerms(req.permissions)) {   // If permissions are there then add another button
           htmlString += `<a class="btn middle-btn quiz-edit" href="/quiz-manager/${doc._id}">Edit</a>`;
         }
-        if (isAdmin(req.permissions)) {
+        if (isAdmin(req.permissions)) {   // Add a delete button if the user is an admin
           htmlString += `<a class="btn middle-btn quiz-delete" data-href="/service/delete-quiz?id=${doc._id}">Delete</a>`;
         }
         htmlString += `<p>${doc.date}</p>`;
@@ -217,6 +220,7 @@ client.connect(err => {
   app.get('/service/quiz-questions', authenticateToken, async (req, res) => {
     if (req.user) {
       if (req.query.id) {
+        // Find a quiz with the id requested
         collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, async (err, result) => {
           if (!err) {
             if (result) {
@@ -224,7 +228,7 @@ client.connect(err => {
               await questions.forEach((q) => {
                 delete q["answer"];   // Delete the answers from each question
                 if (q.answers) {
-                  shuffle(q.answers);
+                  shuffle(q.answers);   // Randomise the order of the array
                 }
               });
               res.json({status: 'success', questions: questions, title: result.name});
@@ -289,6 +293,7 @@ client.connect(err => {
         var quizId = req.query.id;
         console.log(`Received request to delete quiz: ${quizId}`);
         if (isAdmin(req.permissions)) {
+          // Delete a quiz found by the ID requested
           collectionQuizzes.deleteOne({_id: ObjectId(quizId)}, (err, result) => {
             if (!err) {
               console.log(`Delete quiz: ${quizId}`);
@@ -321,11 +326,12 @@ client.connect(err => {
   app.post('/service/submit-answers', authenticateToken, (req, res) => {
     if (req.user) {
       if (req.query.id && req.body.answers && req.body.answers instanceof Array) {
+        // Find a quiz by the ID passed
         collectionQuizzes.findOne({_id: ObjectId(req.query.id)}, async (err, result) => {
           if (!err) {
             if (result) {
               var correctAnswers = 0;
-              await req.body.answers.forEach((ans, index) => {
+              await req.body.answers.forEach((ans, index) => {    // For inputted answer, compare to the actual answer
                 if (ans.toLowerCase().trim() === result.questions[index].answer.toLowerCase().trim()) {
                   correctAnswers++;
                 }
@@ -363,14 +369,18 @@ client.connect(err => {
       return res.status(422).json({status: 'failed'});
     }
 
+    // Find the user in the database
     collectionUsers.findOne({login: login}, (err, result) => {
       if (!err) {
         if (result) {
+          // Compare the hashed password
           bcrypt.compare(req.body.password, result.password, (err, compareResult) => {
             if (!err) {
               if (compareResult) {
-                const accessToken = jwt.sign(user, process.env.TOKEN_SECRET);
-                res.cookie('JwtToken', accessToken, { maxAge: 253402300000000});
+                console.log(user);
+                console.log('User logged in as: ' + user.name);
+                const accessToken = jwt.sign(user, process.env.TOKEN_SECRET);   // Create a cookie
+                res.cookie('JwtToken', accessToken, { maxAge: 253402300000000});    // Send the cookie to the client
                 res.json({ status: 'success' });
                 return;
               }
@@ -481,7 +491,7 @@ client.connect(err => {
   app.post('/service/create-quiz', authenticateToken, (req, res) => {
     var response = {status: 'failed'};
     if (req.user) {
-      if (isAdmin(req.permissions)) {
+      if (isAdmin(req.permissions)) {   // Ensure that the user is an admin
         console.log('Received request to add/update quiz in quizzes collection')
         if (!req.body.name.replace(/\s/g, '').length || !req.body.questions || !req.body.date || !req.body.questions instanceof Array) {
           console.log("Not all details were provided");
@@ -498,6 +508,7 @@ client.connect(err => {
           quiz._id = ObjectId(req.body._id);
         }
         if (req.body.existingQuiz) {
+          // Update a quiz based on the ID
           collectionQuizzes.update({_id: quiz._id}, quiz, (err, result) => {
             if (!err) {
               console.log('Successfully updated quiz in quizzes collection');
@@ -514,6 +525,7 @@ client.connect(err => {
           });
         }
         else {
+          // Insert a quiz if the request states it is a new one
           collectionQuizzes.insertOne(quiz, (err, result) => {
             if (!err) {
               console.log('Successfully added quiz to quizzes collection');
@@ -547,8 +559,10 @@ client.connect(err => {
 
     if (token == null) return next();    // No token provided
 
+    // Verify the token
     jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
       if (!err) {
+        // Find the user in the database
         collectionUsers.findOne({login: user.name}, (err, result) => {
           if (!err) {
             if (result) {
